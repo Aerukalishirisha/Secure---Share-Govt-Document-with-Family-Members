@@ -1,0 +1,92 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const registerForm = document.getElementById('register-form');
+    const loginForm = document.getElementById('login-form');
+    const dashboard = document.getElementById('dashboard');
+    const uploadDocButton = document.getElementById('upload-doc');
+    const fileInput = document.getElementById('file-input');
+    const documentsDiv = document.getElementById('documents');
+    const logoutButton = document.getElementById('logout');
+
+    // User Registration
+    registerForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const aadhaar = document.getElementById('aadhaar').value;
+        const phone = document.getElementById('phone').value;
+        const password = document.getElementById('password').value;
+
+        const users = JSON.parse(localStorage.getItem('users')) || [];
+        users.push({ aadhaar, phone, password });
+        localStorage.setItem('users', JSON.stringify(users));
+
+        alert('Registration successful! You can now login.');
+        registerForm.style.display = 'none';
+        loginForm.style.display = 'block';
+    });
+
+    // User Login
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const aadhaar = document.getElementById('aadhaar-login').value;
+        const password = document.getElementById('password-login').value;
+
+        const users = JSON.parse(localStorage.getItem('users')) || [];
+        const user = users.find(user => user.aadhaar === aadhaar && user.password === password);
+
+        if (user) {
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            showDashboard();
+            loginForm.style.display = 'none';
+        } else {
+            alert('Invalid Aadhaar number or password.');
+        }
+    });
+
+    // Show Dashboard
+    function showDashboard() {
+        dashboard.style.display = 'block';
+        loadDocuments();
+    }
+
+    // Load Documents
+    function loadDocuments() {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const documents = JSON.parse(localStorage.getItem('documents')) || [];
+        const userDocs = documents.filter(doc => doc.aadhaar === currentUser.aadhaar);
+
+        documentsDiv.innerHTML = '';
+        userDocs.forEach(doc => {
+            const docDiv = document.createElement('div');
+            docDiv.textContent = doc.fileName;
+            documentsDiv.appendChild(docDiv);
+        });
+    }
+
+    // Upload Document
+    uploadDocButton.addEventListener('click', () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const documents = JSON.parse(localStorage.getItem('documents')) || [];
+        documents.push({ aadhaar: currentUser.aadhaar, fileName: file.name });
+        localStorage.setItem('documents', JSON.stringify(documents));
+
+        loadDocuments();
+    });
+
+    // Logout
+    logoutButton.addEventListener('click', () => {
+        localStorage.removeItem('currentUser');
+        dashboard.style.display = 'none';
+        loginForm.style.display = 'block';
+    });
+
+    // Check Authentication State
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (currentUser) {
+        showDashboard();
+    } else {
+        registerForm.style.display = 'block';
+    }
+});
+
